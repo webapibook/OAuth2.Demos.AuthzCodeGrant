@@ -13,6 +13,8 @@ In order to understand this OAuth 2.0 flow, we suggest:
 * Looking to at exchanged messages, using a tool such as Fiddler
 * Reading the console messages.
 
+> Note: You are likely to receive an error when creating and opening the `HttpSelfHostServer` stating
+> that you're not permitted to create a reservation for the callback url http://localhost/callback. This
+> issue is easily remedied by reserving this URL [using these instructions](https://msdn.microsoft.com/en-us/library/ms733768(v=vs.110).aspx).
+
 Any feedback is greatly appreciated.
-
-
