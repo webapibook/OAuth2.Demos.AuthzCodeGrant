@@ -22,9 +22,11 @@ namespace OAuth2.Demos.AuthzCodeGrant
             client_id = null,
             client_secret = null,
 
-            // HACK to simplify the hosting, we can use an HTTP URI. 
+            // HACK to simplify the hosting, we can use an HTTP URI.
+			// Note: You will likely need to add a HTTP reservation for the callback
+			// URL from an elevated cmd/PowerShell prompt: https://msdn.microsoft.com/en-us/library/ms733768(v=vs.110).aspx
             // In production it should always be HTTPS
-            redirect_uri = "https://localhost:4443/callback"
+            redirect_uri = "http://localhost/callback"
         };
 
         public static readonly AuthorizationServer AuthzServer = new AuthorizationServer
@@ -37,7 +39,7 @@ namespace OAuth2.Demos.AuthzCodeGrant
         public static readonly Resource ExampleResource = new Resource
         {
             Uri = "https://api.github.com/user",
-            Scope = "user"
+            Scope = string.Empty // No scope == read-only public info. List of available scopes: https://developer.github.com/v3/oauth/#scopes
         };
     }
 
@@ -51,9 +53,10 @@ namespace OAuth2.Demos.AuthzCodeGrant
                 Log.Warn(
                     "The client_id or the client_secret are not configured."
                     + " Please register a client application and set these properties on the Config class");
-                Log.Warn("E.g. for a GitHub client, go to 'Account settings/Application', on the GitHub site");
+                Log.Warn("E.g. for a GitHub client, go to 'Account settings/OAUTH Application', on the GitHub site");
                 return;
             }
+			
             Log.Info("Creating a self-hosted server to handle the authorization callback...");
             var config = new HttpSelfHostConfiguration(Config.Client.redirect_uri);
             config.Routes.MapHttpRoute(
@@ -61,6 +64,8 @@ namespace OAuth2.Demos.AuthzCodeGrant
                 "",
                 new { controller = "OAuth2Callback" }
                 );
+			
+			// If you get errors here, see note above re. adding HTTP reservation!	
             var server = new HttpSelfHostServer(config);
             server.OpenAsync().Wait();
             Log.Info("Done. Server is opened, the OAuth 2.0 dance can now start");
@@ -277,6 +282,7 @@ namespace OAuth2.Demos.AuthzCodeGrant
                 .Where(p => p.GetValue(obj) != null)
                 .Select(p => new KeyValuePair<string, string>(p.Name, p.GetValue(obj).ToString()));
         }
+
         public static string ToQueryString(this IEnumerable<KeyValuePair<string, string>> pairs)
         {
             return pairs.Aggregate(new StringBuilder(),
@@ -284,6 +290,7 @@ namespace OAuth2.Demos.AuthzCodeGrant
                                        HttpUtility.UrlEncode(p.Key),
                                        HttpUtility.UrlEncode(p.Value))).ToString();
         }
+
         public static string RandomBits(this int size)
         {
             using (var rg = RandomNumberGenerator.Create())
@@ -294,6 +301,7 @@ namespace OAuth2.Demos.AuthzCodeGrant
             }
         }
     }
+
     static class Log
     {
         static Log()
@@ -308,6 +316,7 @@ namespace OAuth2.Demos.AuthzCodeGrant
             Console.WriteLine(format, args);
             Console.ResetColor();
         }
+
         public static void Warn(string format, params object[] args)
         {
             //Trace.TraceWarning(format, args);
